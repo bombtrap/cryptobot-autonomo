@@ -32,19 +32,39 @@ def send_telegram_message(msg):
         print("Erro ao enviar mensagem:", e)
 
 # 💰 Operação simulada de trade
-def simular_trade_diaria(par='BTCUSDT', investimento=5, lucro_esperado=1):
+def simular_trade_diaria(par='BTCUSDT', investimento_reais=25, lucro_dolar=1):
     try:
+        # 1. Obter cotação do dólar (USD/BRL) da AwesomeAPI
+        response = requests.get('https://economia.awesomeapi.com.br/last/USD-BRL')
+        data = response.json()
+        cotacao_usd_brl = float(data['USDBRL']['bid'])  # preço de compra
+
+        # 2. Obter preço atual do par BTCUSDT
         preco_atual = float(client.get_symbol_ticker(symbol=par)['price'])
+
+        # ⚠️ Validação do preço
+        if preco_atual > 100000 or preco_atual < 1000:
+            send_telegram_message(f"⚠️ ALERTA: Preço fora da faixa esperada para {par}: ${preco_atual:.2f}")
+            return
+
+        # 3. Calcular quanto é R$25 em dólares (USDT)
+        investimento_usdt = investimento_reais / cotacao_usd_brl
+
+        # 4. Quantidade de BTC que pode ser comprada com esse valor
+        quantidade_btc = investimento_usdt / preco_atual
+
+        # 5. Alvo de venda para lucro de $1
+        preco_venda_total = investimento_usdt + lucro_dolar
+        preco_venda = preco_venda_total / quantidade_btc
+
     except Exception as e:
-        send_telegram_message(f"❌ Erro ao obter o preço da Binance para {par}")
+        send_telegram_message(f"❌ Erro ao calcular operação: {str(e)}")
         return
 
-    preco_compra = preco_atual
-    preco_venda = preco_compra + lucro_esperado / investimento
-
-    send_telegram_message(f'📅 {datetime.datetime.now().strftime("%d/%m %H:%M")} - Operação com {par} iniciada')
-    send_telegram_message(f'🟢 Compra simulada a ${preco_compra:.2f}')
-    send_telegram_message(f'🎯 Alvo de venda: ${preco_venda:.2f}')
+    send_telegram_message(f'📅 {datetime.datetime.now().strftime("%d/%m %H:%M")} - Simulando compra de até R$25 em {par}')
+    send_telegram_message(f'💵 Cotação USD: R${cotacao_usd_brl:.2f}')
+    send_telegram_message(f'🟢 Compra simulada: {quantidade_btc:.8f} {par[:-4]} a ${preco_atual:.2f}')
+    send_telegram_message(f'🎯 Alvo de venda: ${preco_venda:.2f} para lucro de $1')
 
     tentativas = 0
     while True:
@@ -66,6 +86,7 @@ def simular_trade_diaria(par='BTCUSDT', investimento=5, lucro_esperado=1):
             break
 
         time.sleep(300)
+
 
 # 🎯 Comandos do Telegram
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
