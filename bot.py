@@ -5,12 +5,16 @@ import time
 import schedule
 import datetime
 import os
+from dotenv import load_dotenv  # Importa dotenv
 
-# 🔐 Pega variáveis de ambiente configuradas no Render
-BINANCE_API_KEY = os.environ['BINANCE_API_KEY']
-BINANCE_API_SECRET = os.environ['BINANCE_API_SECRET']
-TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
-TELEGRAM_CHAT_ID = os.environ['TELEGRAM_CHAT_ID']
+# Carrega as variáveis do arquivo .env
+load_dotenv()
+
+# 🔐 Pega variáveis de ambiente configuradas no .env
+BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
+BINANCE_API_SECRET = os.getenv('BINANCE_API_SECRET')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 # 🔗 Conecta com Binance
 client = Client(api_key=BINANCE_API_KEY, api_secret=BINANCE_API_SECRET)
@@ -67,4 +71,5 @@ schedule.every().day.at("09:00").do(simular_trade_diaria)
 send_telegram_message("🤖 CRYPTOBOT AUTÔNOMO INICIADO!")
 
 while True:
-    schedule.run_pen_
+    schedule.run_pending()
+    time.sleep(1)
